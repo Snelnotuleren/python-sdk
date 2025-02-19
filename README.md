@@ -1,8 +1,7 @@
 # Snelnotuleren Python SDK
 
-[![Tests](https://github.com/snelnotuleren/python-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/snelnotuleren/python-sdk/actions)
-[![PyPI version](https://badge.fury.io/py/snelnotuleren.svg)](https://badge.fury.io/py/snelnotuleren)
-[![Python versions](https://img.shields.io/pypi/pyversions/snelnotuleren.svg)](https://pypi.org/project/snelnotuleren/)
+[![PyPI version](https://badge.fury.io/py/snelnotuleren-sdk.svg)](https://badge.fury.io/py/snelnotuleren-sdk)
+[![Python versions](https://img.shields.io/pypi/pyversions/snelnotuleren-sdk.svg)](https://pypi.org/project/snelnotuleren-sdk/)
 
 De officiële Python SDK voor de Snelnotuleren API.
 
@@ -61,15 +60,12 @@ order_id = client.create_order(
 ```bash
 # Installeer dependencies
 pip install -r requirements.txt
-
-# Run tests
-pytest tests/
 ```
 
 ## Links
 
 - [API Documentatie](https://api.snelnotuleren.nl/docs)
-- [Support](https://snelnotuleren.nl/support)
+- [Support](niels@snelnotuleren.nl)
 
 ## License
 

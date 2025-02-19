@@ -8,7 +8,7 @@ De officiële Python SDK voor de Snelnotuleren API.
 ## Installatie
 
 ```bash
-pip install snelnotuleren
+pip install snelnotuleren-sdk
 ```
 
 ## Quick Start

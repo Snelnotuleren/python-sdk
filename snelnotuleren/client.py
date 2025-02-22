@@ -1,6 +1,7 @@
 # snelnotuleren/client.py
 import requests
 import os
+import mimetypes
 
 class SnelNotulerenClient:
     def __init__(self, client_id=None, client_secret=None):
@@ -44,9 +45,6 @@ class SnelNotulerenClient:
                 - model_type: Type model ('standard')
                 - speaker_diarization: Of sprekerherkenning gebruikt moet worden (bool)
                 - speaker_count: Verwacht aantal sprekers (int)
-                
-        Returns:
-            str: Order ID
         """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -54,6 +52,11 @@ class SnelNotulerenClient:
         # Get access token
         if not self._access_token:
             self._access_token = self._get_access_token()
+
+        # Get file mime type
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = 'audio/mpeg'  # Default to audio/mpeg if can't detect
 
         # Prepare order data
         order_data = {
@@ -83,13 +86,21 @@ class SnelNotulerenClient:
         result = response.json()
 
         # Upload file
-        with open(file_path, 'rb') as f:
-            upload_response = requests.put(
-                result["uploadUrl"],
-                data=f.read(),
-                headers={"Content-Type": "audio/mpeg"}
-            )
-            upload_response.raise_for_status()
+        try:
+            with open(file_path, 'rb') as f:
+                upload_response = requests.put(
+                    result["uploadUrl"],
+                    data=f,
+                    headers={
+                        "Content-Type": mime_type
+                    }
+                )
+                upload_response.raise_for_status()
+        except Exception as e:
+            print(f"Error uploading file: {str(e)}")
+            print(f"Response status: {upload_response.status_code}")
+            print(f"Response text: {upload_response.text}")
+            raise
 
         return result["orderId"]
 

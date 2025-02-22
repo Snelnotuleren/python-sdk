@@ -123,7 +123,7 @@ Je kunt deze events verwachten:
     "data": {
       "meeting_name": "Maandelijkse vergadering",
       "meeting_date": "2024-02-22",
-      "notulen": "Agendapunt 1 De vergadering wordt geopend...",
+      "notulen": "Agendapunt 1: Opening\n De vergadering wordt geopend...",
       "speakers": ["Spreker 1", "Spreker 2"],
       "metadata": {
         "speaker_diarization": true,

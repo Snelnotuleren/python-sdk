@@ -115,9 +115,6 @@ class SnelNotulerenClient:
             
         Returns:
             str: The order ID
-            
-        Raises:
-            Exception: If order creation or file upload fails
         """
         if not self.access_token:
             self.get_token()
@@ -147,19 +144,23 @@ class SnelNotulerenClient:
             json=order_data
         )
         
-        if order_response.status_code != 200:
-            raise Exception(f"Order creation failed: {order_response.text}")
+        # Accept both 200 and 202 as success
+        if order_response.status_code not in [200, 202]:
+            raise Exception(f"Order creation failed: Status {order_response.status_code}")
             
         order_data = order_response.json()
         
         if verbose:
             print(f"\nOrder created successfully:")
             print(f"Order ID: {order_data['orderId']}")
+            print(f"Upload URL: {order_data.get('uploadUrl')}")
             print(f"Payment Required: {order_data.get('paymentRequired', False)}")
             if order_data.get('paymentUrl'):
                 print(f"Payment URL: {order_data['paymentUrl']}")
             if webhook_url:
                 print(f"Webhook URL: {webhook_url}")
+            if order_data.get('estimatedProcessingTime'):
+                print(f"Estimated processing time: {order_data['estimatedProcessingTime']}")
         
         if verbose:
             print("\n2. Uploading file...")

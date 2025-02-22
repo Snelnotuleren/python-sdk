@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="snelnotuleren-sdk",
-    version="1.1.3",
+    version="1.1.4",
     author="Snelnotuleren.nl",
     author_email="niels@snelnotuleren.nl",
     description="Python SDK voor de Snelnotuleren.nl API",

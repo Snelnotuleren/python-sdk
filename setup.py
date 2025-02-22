@@ -4,23 +4,29 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="snelnotuleren-sdk",
-    version="0.1.0",
-    author="Niels van der Werf",
-    author_email="niels@snelnotuleren.nl",
-    description="Official Python SDK for the Snelnotuleren API",
+    name="snelnotuleren",
+    version="1.1.0",
+    author="Snelnotuleren.nl",
+    author_email="support@snelnotuleren.nl",
+    description="Python SDK voor de Snelnotuleren.nl API",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/snelnotuleren/python-sdk",
     packages=find_packages(),
     classifiers=[
-        "Programming Language :: Python :: 3",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     python_requires=">=3.7",
     install_requires=[
-        "requests>=2.25.0"
+        "requests>=2.25.0",
     ],
-    license="MIT",
+    keywords="notulen, transcriptie, api, webhook",
 )

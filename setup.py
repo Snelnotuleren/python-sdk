@@ -4,10 +4,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="snelnotuleren",
-    version="1.1.0",
+    name="snelnotuleren-sdk",
+    version="1.1.0",  # Bump version for webhook feature
     author="Snelnotuleren.nl",
-    author_email="support@snelnotuleren.nl",
+    author_email="niels@snelnotuleren.nl",
     description="Python SDK voor de Snelnotuleren.nl API",
     long_description=long_description,
     long_description_content_type="text/markdown",

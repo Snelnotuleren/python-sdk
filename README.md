@@ -7,7 +7,7 @@ Python SDK voor de Snelnotuleren.nl API. Automatiseer het verwerken van audio-op
 ## Installatie
 
 ```bash
-pip install snelnotuleren
+pip install snelnotuleren-sdk
 ```
 
 ## Gebruik

@@ -173,7 +173,8 @@ class SnelNotulerenClient:
             'reportType': report_type,
             'context': context,
             'meeting_date': meeting_date,
-            'smart_detection': smart_detection
+            'smart_detection': smart_detection,
+            'modelType': 'standard',  # Only model for now
         }
         
         # Add unstructured_agenda if provided

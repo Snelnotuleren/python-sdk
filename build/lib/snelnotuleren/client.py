@@ -116,47 +116,34 @@ class SnelNotulerenClient:
             email (str): Email address for notifications
             context (str): Meeting name/context
             meeting_date (str): Meeting date in YYYY-MM-DD format
-            smart_detection (bool): Whether to use smart agenda detection
+            smart_detection (bool): Whether to use smart agenda detection.
+                If False, unstructured_agenda is required.
             
         Optional Args:
             report_type (str, optional): Type of report. Defaults to "transcriptie".
                 Options: transcriptie, korte_notulen, middel_notulen, lange_notulen
             webhook_url (str, optional): URL for webhook notifications
-            unstructured_agenda (str, optional): Unstructured agenda text
-            verbose (bool, optional): Whether to print progress. Defaults to True
+            unstructured_agenda (str, optional): Unstructured agenda text.
+                Required if smart_detection is False.
                 
         Experimental Features:
-            These features are in beta and may change or be removed:
-            speaker_diarization (bool, optional): Use speaker diarization. Defaults to False.
+            These features are in beta and may change:
+            speaker_diarization (bool, optional): Use speaker diarization
             speaker_count (int, optional): Expected number of speakers (1-10)
             speaker_names (list, optional): List of speaker names
-                
+        
         Returns:
             str: The order ID
-                
-        Example:
-            >>> client = SnelNotulerenClient(client_id="...", client_secret="...")
-            >>> # Basic usage
-            >>> order_id = client.create_order(
-            ...     file_path="vergadering.mp3",
-            ...     email="contact@bedrijf.nl",
-            ...     context="Bestuursvergadering",
-            ...     meeting_date="2025-02-23",
-            ...     smart_detection=True
-            ... )
-            >>> 
-            >>> # With experimental features
-            >>> order_id = client.create_order(
-            ...     file_path="vergadering.mp3",
-            ...     email="contact@bedrijf.nl",
-            ...     context="Bestuursvergadering",
-            ...     meeting_date="2025-02-23",
-            ...     smart_detection=True,
-            ...     speaker_diarization=True,
-            ...     speaker_count=4,
-            ...     speaker_names=["Jan", "Piet", "Marie", "Anna"]
-            ... )
+        
+        Raises:
+            ValueError: If validation fails for any of the parameters
         """
+        # Validate smart_detection and unstructured_agenda combination
+        if not smart_detection and not unstructured_agenda:
+            raise ValueError(
+                "Either smart_detection must be True or unstructured_agenda must be provided"
+            )
+        
         if not self.access_token:
             self.get_token()
             
@@ -189,11 +176,13 @@ class SnelNotulerenClient:
             'smart_detection': smart_detection
         }
         
+        # Add unstructured_agenda if provided
+        if unstructured_agenda:
+            order_data['unstructured_agenda'] = unstructured_agenda
+        
         # Add optional fields
         if webhook_url:
             order_data['webhook_url'] = webhook_url
-        if unstructured_agenda:
-            order_data['unstructured_agenda'] = unstructured_agenda
             
         # Add experimental features if enabled
         if speaker_diarization:
@@ -202,7 +191,7 @@ class SnelNotulerenClient:
                 order_data['speakerCount'] = speaker_count
             if speaker_names:
                 order_data['speakerNames'] = speaker_names
-            
+        
         # Create order
         order_response = self.session.post(
             f"{self.base_url}/api/v1/create-order",
@@ -228,8 +217,9 @@ class SnelNotulerenClient:
                 print(f"Payment URL: {order_data['paymentUrl']}")
             if webhook_url:
                 print(f"Webhook URL: {webhook_url}")
-            if order_data.get('estimatedProcessingTime'):
-                print(f"Estimated processing time: {order_data['estimatedProcessingTime']}")
+            print(f"Smart Detection: {'enabled' if smart_detection else 'disabled'}")
+            if unstructured_agenda:
+                print("Using provided unstructured agenda")
             
             # Log experimental features if used
             if speaker_diarization:

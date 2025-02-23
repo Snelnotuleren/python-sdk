@@ -99,8 +99,8 @@ class SnelNotulerenClient:
         context: str,
         meeting_date: str,
         smart_detection: bool,
+        webhook_url: str,
         report_type: str = "transcriptie",
-        webhook_url: Optional[str] = None,
         unstructured_agenda: Optional[str] = None,
         # Experimental features
         speaker_diarization: bool = False,
@@ -118,11 +118,11 @@ class SnelNotulerenClient:
             meeting_date (str): Meeting date in YYYY-MM-DD format
             smart_detection (bool): Whether to use smart agenda detection.
                 If False, unstructured_agenda is required.
+            webhook_url (str, optional): URL for webhook notifications
             
         Optional Args:
             report_type (str, optional): Type of report. Defaults to "transcriptie".
                 Options: transcriptie, korte_notulen, middel_notulen, lange_notulen
-            webhook_url (str, optional): URL for webhook notifications
             unstructured_agenda (str, optional): Unstructured agenda text.
                 Required if smart_detection is False.
                 

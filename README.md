@@ -51,7 +51,8 @@ order_id = client.create_order(
     context='Maandelijkse vergadering', # Verplicht, 
     meeting_date='2025-02-23',  # Verplicht, format: YYYY-MM-DD
     smart_detection=True,       # Verplicht, voor automatische agendapunt detectie
-    report_type='middel_notulen'  # Optional, standaard op 'transcriptie'
+    report_type='middel_notulen',  # Optional, standaard op 'transcriptie'
+    webhook_url='https://jouw-domein.nl/webhook'
 )
 
 # Met experimentele features
@@ -64,22 +65,7 @@ order_id = client.create_order(
     # Experimentele features
     speaker_diarization=True,  # Optioneel, experimenteel
     speaker_count=4,          # Optioneel, experimenteel (1-10)
-    speaker_names=['Jan', 'Piet', 'Marie', 'Anna']  # Optioneel, experimenteel
-)
-```
-
-### Webhook Notificaties
-
-Je kunt webhooks gebruiken om direct een notificatie te krijgen wanneer je notulen klaar zijn:
-
-```python
-# Maak een order met webhook URL
-order_id = client.create_order(
-    file_path='vergadering.mp3',
-    email='contact@bedrijf.nl',
-    context='Maandelijkse vergadering',
-    meeting_date='2025-02-23',
-    smart_detection=True,
+    speaker_names=['Jan', 'Piet', 'Marie', 'Anna'],  # Optioneel, experimenteel
     webhook_url='https://jouw-domein.nl/webhook'
 )
 ```
@@ -132,11 +118,11 @@ if __name__ == '__main__':
 - `context`: Naam/context van de vergadering
 - `meeting_date`: Datum van de vergadering (format: YYYY-MM-DD)
 - `smart_detection`: Automatische agendapunt detectie (boolean)
+- `webhook_url`: URL voor webhook notificaties
 
 ## Optionele Velden
 
 - `report_type`: Type rapport (default: 'transcriptie')
-- `webhook_url`: URL voor webhook notificaties
 - `unstructured_agenda`: Ongestructureerde agenda tekst
 
 ## Experimentele Features

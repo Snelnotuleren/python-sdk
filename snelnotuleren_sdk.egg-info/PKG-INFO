@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: snelnotuleren-sdk
-Version: 1.1.6
+Version: 1.1.7
 Summary: Python SDK voor de Snelnotuleren.nl API
 Home-page: https://github.com/snelnotuleren/python-sdk
 Author: Snelnotuleren.nl
@@ -28,7 +28,7 @@ Python SDK voor de Snelnotuleren.nl API. Automatiseer het verwerken van audio-op
 ## Installatie
 
 ```bash
-pip install snelnotuleren-sdk
+pip install snelnotuleren
 ```
 
 ## Gebruik
@@ -65,14 +65,27 @@ client = SnelNotulerenClient(
     client_secret='jouw_client_secret'
 )
 
-# Maak een order aan
+# Basis gebruik met verplichte velden
+order_id = client.create_order(
+    file_path='vergadering.mp3', # Verplicht, 
+    email='contact@bedrijf.nl', # Verplicht, 
+    context='Maandelijkse vergadering', # Verplicht, 
+    meeting_date='2025-02-23',  # Verplicht, format: YYYY-MM-DD
+    smart_detection=True,       # Verplicht, voor automatische agendapunt detectie
+    report_type='middel_notulen'  # Optional, standaard op 'transcriptie'
+)
+
+# Met experimentele features
 order_id = client.create_order(
     file_path='vergadering.mp3',
     email='contact@bedrijf.nl',
     context='Maandelijkse vergadering',
-    report_type='middel_notulen',  # Optional, standaard op transcriptie
-    speaker_diarization=True,      # Optional, experimenteel
-    speaker_count=4                # Optional, experimenteel
+    meeting_date='2025-02-23',
+    smart_detection=True,
+    # Experimentele features
+    speaker_diarization=True,  # Optioneel, experimenteel
+    speaker_count=4,          # Optioneel, experimenteel (1-10)
+    speaker_names=['Jan', 'Piet', 'Marie', 'Anna']  # Optioneel, experimenteel
 )
 ```
 
@@ -86,6 +99,8 @@ order_id = client.create_order(
     file_path='vergadering.mp3',
     email='contact@bedrijf.nl',
     context='Maandelijkse vergadering',
+    meeting_date='2025-02-23',
+    smart_detection=True,
     webhook_url='https://jouw-domein.nl/webhook'
 )
 ```
@@ -131,6 +146,35 @@ if __name__ == '__main__':
     app.run(port=8080)
 ```
 
+## Verplichte Velden
+
+- `file_path`: Pad naar het audio bestand
+- `email`: Email adres voor notificaties
+- `context`: Naam/context van de vergadering
+- `meeting_date`: Datum van de vergadering (format: YYYY-MM-DD)
+- `smart_detection`: Automatische agendapunt detectie (boolean)
+
+## Optionele Velden
+
+- `report_type`: Type rapport (default: 'transcriptie')
+- `webhook_url`: URL voor webhook notificaties
+- `unstructured_agenda`: Ongestructureerde agenda tekst
+
+## Experimentele Features
+
+De volgende features zijn in beta en kunnen wijzigen:
+
+- `speaker_diarization`: Sprekerherkenning gebruiken (boolean)
+- `speaker_count`: Verwacht aantal sprekers (1-10)
+- `speaker_names`: Lijst met namen van sprekers
+
+## Report Types
+
+- `transcriptie`: Alleen transcriptie (€5)
+- `korte_notulen`: Beknopte notulen (€10)
+- `middel_notulen`: Uitgebreide notulen (€20)
+- `lange_notulen`: Complete notulen met details (€25)
+
 ## Webhook Events
 
 Je kunt deze events verwachten:
@@ -144,7 +188,7 @@ Je kunt deze events verwachten:
     "data": {
       "meeting_name": "Maandelijkse vergadering",
       "meeting_date": "2024-02-22",
-      "notulen": "Agendapunt 1: Opening\n De vergadering wordt geopend...",
+      "notulen": "De vergadering wordt geopend...",
       "speakers": ["Spreker 1", "Spreker 2"],
       "metadata": {
         "speaker_diarization": true,
@@ -165,13 +209,6 @@ Je kunt deze events verwachten:
     "error": "Beschrijving van de fout"
   }
   ```
-
-## Report Types
-
-- `transcriptie`: Alleen transcriptie
-- `korte_notulen`: Beknopte notulen
-- `middel_notulen`: Uitgebreide notulen
-- `lange_notulen`: Complete notulen met details
 
 ## Security Best Practices
 

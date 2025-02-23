@@ -96,25 +96,66 @@ class SnelNotulerenClient:
         self, 
         file_path: str, 
         email: str, 
-        context: str, 
-        webhook_url: Optional[str] = None,
+        context: str,
+        meeting_date: str,
+        smart_detection: bool,
         report_type: str = "transcriptie",
+        webhook_url: Optional[str] = None,
+        unstructured_agenda: Optional[str] = None,
+        # Experimental features
+        speaker_diarization: bool = False,
+        speaker_count: Optional[int] = None,
+        speaker_names: Optional[list] = None,
         verbose: bool = True
     ) -> str:
         """
         Create a new order and upload an audio file.
         
-        Args:
+        Required Args:
             file_path (str): Path to the audio file
             email (str): Email address for notifications
-            context (str): Meeting context/name
-            webhook_url (str, optional): URL for webhook notifications
+            context (str): Meeting name/context
+            meeting_date (str): Meeting date in YYYY-MM-DD format
+            smart_detection (bool): Whether to use smart agenda detection
+            
+        Optional Args:
             report_type (str, optional): Type of report. Defaults to "transcriptie".
                 Options: transcriptie, korte_notulen, middel_notulen, lange_notulen
-            verbose (bool, optional): Whether to print progress. Defaults to True.
-            
+            webhook_url (str, optional): URL for webhook notifications
+            unstructured_agenda (str, optional): Unstructured agenda text
+            verbose (bool, optional): Whether to print progress. Defaults to True
+                
+        Experimental Features:
+            These features are in beta and may change or be removed:
+            speaker_diarization (bool, optional): Use speaker diarization. Defaults to False.
+            speaker_count (int, optional): Expected number of speakers (1-10)
+            speaker_names (list, optional): List of speaker names
+                
         Returns:
             str: The order ID
+                
+        Example:
+            >>> client = SnelNotulerenClient(client_id="...", client_secret="...")
+            >>> # Basic usage
+            >>> order_id = client.create_order(
+            ...     file_path="vergadering.mp3",
+            ...     email="contact@bedrijf.nl",
+            ...     context="Bestuursvergadering",
+            ...     meeting_date="2025-02-23",
+            ...     smart_detection=True
+            ... )
+            >>> 
+            >>> # With experimental features
+            >>> order_id = client.create_order(
+            ...     file_path="vergadering.mp3",
+            ...     email="contact@bedrijf.nl",
+            ...     context="Bestuursvergadering",
+            ...     meeting_date="2025-02-23",
+            ...     smart_detection=True,
+            ...     speaker_diarization=True,
+            ...     speaker_count=4,
+            ...     speaker_names=["Jan", "Piet", "Marie", "Anna"]
+            ... )
         """
         if not self.access_token:
             self.get_token()
@@ -122,17 +163,45 @@ class SnelNotulerenClient:
         if verbose:
             print("1. Creating order...")
             
+        # Validate meeting_date format
+        try:
+            from datetime import datetime
+            datetime.strptime(meeting_date, '%Y-%m-%d')
+        except ValueError:
+            raise ValueError("meeting_date must be in YYYY-MM-DD format")
+            
+        # Validate speaker_count if provided
+        if speaker_count is not None:
+            if not isinstance(speaker_count, int) or not (1 <= speaker_count <= 10):
+                raise ValueError("speaker_count must be an integer between 1 and 10")
+                
+        # Validate speaker_names if provided
+        if speaker_names is not None and not isinstance(speaker_names, list):
+            raise ValueError("speaker_names must be a list of strings")
+            
         # Prepare order data
         order_data = {
             'fileName': file_path.split('/')[-1],
             'email': email,
-            'modelType': 'standard',
             'reportType': report_type,
-            'context': context
+            'context': context,
+            'meeting_date': meeting_date,
+            'smart_detection': smart_detection
         }
         
+        # Add optional fields
         if webhook_url:
             order_data['webhook_url'] = webhook_url
+        if unstructured_agenda:
+            order_data['unstructured_agenda'] = unstructured_agenda
+            
+        # Add experimental features if enabled
+        if speaker_diarization:
+            order_data['useSpeakerDiarization'] = True
+            if speaker_count:
+                order_data['speakerCount'] = speaker_count
+            if speaker_names:
+                order_data['speakerNames'] = speaker_names
             
         # Create order
         order_response = self.session.post(
@@ -161,6 +230,15 @@ class SnelNotulerenClient:
                 print(f"Webhook URL: {webhook_url}")
             if order_data.get('estimatedProcessingTime'):
                 print(f"Estimated processing time: {order_data['estimatedProcessingTime']}")
+            
+            # Log experimental features if used
+            if speaker_diarization:
+                print("\nExperimental features enabled:")
+                print(f"- Speaker diarization: enabled")
+                if speaker_count:
+                    print(f"- Expected speakers: {speaker_count}")
+                if speaker_names:
+                    print(f"- Speaker names: {', '.join(speaker_names)}")
         
         if verbose:
             print("\n2. Uploading file...")
@@ -181,6 +259,8 @@ class SnelNotulerenClient:
                 print(f"\nComplete! Order ID: {order_data['orderId']}")
                 if webhook_url:
                     print(f"You will receive updates at: {webhook_url}")
+                print(f"Meeting date: {meeting_date}")
+                print(f"Smart agenda detection: {'enabled' if smart_detection else 'disabled'}")
             
             return order_data['orderId']
             

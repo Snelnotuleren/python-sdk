@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: snelnotuleren-sdk
-Version: 1.1.9
+Version: 1.1.10
 Summary: Python SDK voor de Snelnotuleren.nl API
 Home-page: https://github.com/snelnotuleren/python-sdk
 Author: Snelnotuleren.nl
@@ -28,7 +28,7 @@ Python SDK voor de Snelnotuleren.nl API. Automatiseer het verwerken van audio-op
 ## Installatie
 
 ```bash
-pip install snelnotuleren
+pip install snelnotuleren-sdk
 ```
 
 ## Gebruik

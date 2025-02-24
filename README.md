@@ -55,6 +55,16 @@ order_id = client.create_order(
     webhook_url='https://jouw-domein.nl/webhook'
 )
 
+# Met unstructured_agenda
+order_id = client.create_order(
+    file_path='vergadering.mp3',
+    email='contact@bedrijf.nl',
+    context='Maandelijkse vergadering',
+    meeting_date='2025-02-23',
+    unstructured_agenda='1.opening, 2. medelingen. (3) financien, 3.a omzet, etc...' # Hier is geen format verplicht, LLM herkent agendapunten
+    webhook_url='https://jouw-domein.nl/webhook'
+)
+
 # Met experimentele features
 order_id = client.create_order(
     file_path='vergadering.mp3',
@@ -111,7 +121,7 @@ if __name__ == '__main__':
     app.run(port=8080)
 ```
 
-## Verplichte Velden
+## Parameters
 
 - `file_path`: Pad naar het audio bestand
 - `email`: Email adres voor notificaties
@@ -119,9 +129,6 @@ if __name__ == '__main__':
 - `meeting_date`: Datum van de vergadering (format: YYYY-MM-DD)
 - `smart_detection`: Automatische agendapunt detectie (boolean)
 - `webhook_url`: URL voor webhook notificaties
-
-## Optionele Velden
-
 - `report_type`: Type rapport (default: 'transcriptie')
 - `unstructured_agenda`: Ongestructureerde agenda tekst
 
@@ -153,7 +160,7 @@ Je kunt deze events verwachten:
     "data": {
       "meeting_name": "Maandelijkse vergadering",
       "meeting_date": "2024-02-22",
-      "notulen": "De vergadering wordt geopend...",
+      "notulen": "1. Opening\nDe vergadering wordt geopend... 2. Rondvraag\nEr werd...",
       "speakers": ["Spreker 1", "Spreker 2"],
       "metadata": {
         "speaker_diarization": true,

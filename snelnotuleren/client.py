@@ -107,7 +107,7 @@ class SnelNotulerenClient:
         speaker_count: Optional[int] = None,
         speaker_names: Optional[list] = None,
         verbose: bool = True
-    ) -> str:
+    ) -> dict:
         """
         Create a new order and upload an audio file.
         
@@ -133,7 +133,7 @@ class SnelNotulerenClient:
             speaker_names (list, optional): List of speaker names
         
         Returns:
-            str: The order ID
+            dict: Full response data including order ID and payment information if needed
         
         Raises:
             ValueError: If validation fails for any of the parameters
@@ -209,13 +209,22 @@ class SnelNotulerenClient:
             
         order_data = order_response.json()
         
+        # Controleer of betaling vereist is
+        payment_required = order_data.get('status') == 'payment_required' or order_data.get('paymentRequired', False)
+        
         if verbose:
             print(f"\nOrder created successfully:")
             print(f"Order ID: {order_data['orderId']}")
+            print(f"Status: {order_data.get('status', 'processing')}")
             print(f"Upload URL: {order_data.get('uploadUrl')}")
-            print(f"Payment Required: {order_data.get('paymentRequired', False)}")
-            if order_data.get('paymentUrl'):
-                print(f"Payment URL: {order_data['paymentUrl']}")
+            print(f"Payment Required: {payment_required}")
+            
+            if payment_required:
+                if order_data.get('paymentUrl'):
+                    print(f"Payment URL: {order_data['paymentUrl']}")
+                else:
+                    print("Payment required. Use the pay_for_order method to process payment.")
+                    
             if webhook_url:
                 print(f"Webhook URL: {webhook_url}")
             print(f"Smart Detection: {'enabled' if smart_detection else 'disabled'}")
@@ -230,6 +239,10 @@ class SnelNotulerenClient:
                     print(f"- Expected speakers: {speaker_count}")
                 if speaker_names:
                     print(f"- Speaker names: {', '.join(speaker_names)}")
+        
+        # Als betaling vereist is, moeten we niet doorgaan met uploaden
+        if payment_required:
+            return order_data
         
         if verbose:
             print("\n2. Uploading file...")
@@ -253,7 +266,8 @@ class SnelNotulerenClient:
                 print(f"Meeting date: {meeting_date}")
                 print(f"Smart agenda detection: {'enabled' if smart_detection else 'disabled'}")
             
-            return order_data['orderId']
+            # Return full order data instead of just the ID
+            return order_data
             
         except Exception as e:
             print(f"Final upload attempt failed: {str(e)}")
@@ -261,3 +275,195 @@ class SnelNotulerenClient:
             print(f"File size: {len(file_data)} bytes")
             print(f"Order ID: {order_data['orderId']}")
             raise
+            
+    def upload_file(self, file_path: str, upload_url: str) -> requests.Response:
+        """
+        Upload a file to the given URL.
+        
+        Args:
+            file_path (str): Path to the file to upload
+            upload_url (str): The URL to upload to (from the order response)
+            
+        Returns:
+            requests.Response: The response from the upload
+        """
+        with open(file_path, 'rb') as f:
+            file_data = f.read()
+            
+        return self._upload_with_retry(upload_url, file_data)
+    
+    def pay_for_order(self, order_id: str, confirm: bool = True) -> dict:
+        """
+        Mark an order as paid via the API.
+        This is only needed when the order requires payment.
+        
+        Args:
+            order_id (str): The order ID to pay for
+            confirm (bool): Explicitly confirm payment (required)
+            
+        Returns:
+            dict: The updated order data
+            
+        Raises:
+            Exception: If payment fails
+        """
+        if not self.access_token:
+            self.get_token()
+            
+        # Controleer eerst de huidige status
+        status = self.check_payment_status(order_id)
+        if status.get('status') != 'payment_required':
+            return status
+            
+        # Bevestig de betaling
+        payment_response = self.session.post(
+            f"{self.base_url}/api/v1/orders/{order_id}/payment",
+            headers={
+                'Authorization': f'Bearer {self.access_token}',
+                'X-API-Key': self.client_id
+            },
+            json={
+                'confirm_payment': confirm
+            }
+        )
+        
+        if payment_response.status_code not in [200, 202]:
+            raise Exception(f"Payment failed: Status {payment_response.status_code}, {payment_response.text}")
+            
+        return payment_response.json()
+        
+    def check_payment_status(self, order_id: str) -> dict:
+        """
+        Check the payment status of an order.
+        
+        Args:
+            order_id (str): The order ID to check
+            
+        Returns:
+            dict: Payment status information
+            
+        Raises:
+            Exception: If the request fails
+        """
+        if not self.access_token:
+            self.get_token()
+            
+        status_response = self.session.get(
+            f"{self.base_url}/api/v1/orders/{order_id}/payment",
+            headers={
+                'Authorization': f'Bearer {self.access_token}',
+                'X-API-Key': self.client_id
+            }
+        )
+        
+        if status_response.status_code != 200:
+            raise Exception(f"Status check failed: Status {status_response.status_code}")
+            
+        return status_response.json()
+        
+    def process_order_with_payment(
+        self, 
+        file_path: str, 
+        email: str, 
+        context: str,
+        meeting_date: str,
+        smart_detection: bool,
+        webhook_url: str,
+        report_type: str = "transcriptie",
+        unstructured_agenda: Optional[str] = None,
+        speaker_diarization: bool = False,
+        speaker_count: Optional[int] = None,
+        speaker_names: Optional[list] = None,
+        verbose: bool = True,
+        auto_pay: bool = True  # Automatically pay if required
+    ) -> dict:
+        """
+        Complete workflow to create an order, handle payment if needed, and upload the file.
+        
+        Args:
+            Same as create_order with the addition of:
+            auto_pay (bool): Whether to automatically pay for the order if required
+            
+        Returns:
+            dict: Complete order information
+        """
+        # Create order and get response
+        order_data = self.create_order(
+            file_path=file_path,
+            email=email,
+            context=context,
+            meeting_date=meeting_date,
+            smart_detection=smart_detection,
+            webhook_url=webhook_url,
+            report_type=report_type,
+            unstructured_agenda=unstructured_agenda,
+            speaker_diarization=speaker_diarization,
+            speaker_count=speaker_count,
+            speaker_names=speaker_names,
+            verbose=verbose
+        )
+        
+        # Check if payment is required
+        payment_required = order_data.get('status') == 'payment_required' or order_data.get('paymentRequired', False)
+        
+        if payment_required:
+            if not auto_pay:
+                print("Payment is required for this order. Call pay_for_order() to proceed.")
+                return order_data
+                
+            # Auto-pay if enabled
+            if verbose:
+                print("Payment required. Processing automatic payment...")
+                
+            payment_result = self.pay_for_order(order_data['orderId'])
+            
+            if verbose:
+                print(f"Payment processed: {payment_result.get('message', 'Success')}")
+                
+            # Now upload the file
+            if verbose:
+                print("\nUploading file...")
+                
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
+                
+            upload_response = self._upload_with_retry(
+                order_data['uploadUrl'],
+                file_data
+            )
+            
+            if verbose:
+                print(f"Upload successful! Response code: {upload_response.status_code}")
+                print(f"\nComplete! Order ID: {order_data['orderId']}")
+                
+            # Get updated order status
+            order_status = self.check_order_status(order_data['orderId'])
+            return order_status
+            
+        return order_data
+        
+    def check_order_status(self, order_id: str) -> dict:
+        """
+        Check the status of an order.
+        
+        Args:
+            order_id (str): The order ID to check
+            
+        Returns:
+            dict: Order status information
+        """
+        if not self.access_token:
+            self.get_token()
+            
+        status_response = self.session.get(
+            f"{self.base_url}/api/v1/orders/{order_id}/status",
+            headers={
+                'Authorization': f'Bearer {self.access_token}',
+                'X-API-Key': self.client_id
+            }
+        )
+        
+        if status_response.status_code != 200:
+            raise Exception(f"Status check failed: Status {status_response.status_code}")
+            
+        return status_response.json()
